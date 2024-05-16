@@ -23,8 +23,30 @@ def flat(array):
     return final_array
 
 
-def get_model_move(model, input):
-    output = model.predict(input)
+# input struct
+# 27 booleans (1 == True or 0 == False) input
+# 1. is square(index 0) empty
+# 2. is square(index 0) occupied by player 1
+# 3. is square(index 0) occupied by player 2
+# 4. is square(index 1) empty
+# 5. is square(index 1) occupied by player 1
+# 6. is square(index 1) occupied by player 2
+# ...
+# 28. 0 if ai is player 1, 1 if ai is player 2
+def trad_input(game):
+    inputs = []
+    for square in flat(game.board):
+        if square == 0:
+            inputs.extend([1, 0, 0])
+        elif square == 1:
+            inputs.extend([0, 1, 0])
+        elif square == 2:
+            inputs.extend([0, 0, 1])
+    inputs.append(game.player - 1)
+    return np.array([inputs])
+
+
+def trad_output(output):
     max_value = 0
     best_index = 0
     for i in range(len(output[0])):
@@ -36,14 +58,19 @@ def get_model_move(model, input):
     return move
 
 
+def get_model_move(model, input):
+    output = model.predict(input)
+    return trad_output(output)
+
+
 def model_play_game(model):
-    is_first_player = True if random.randint(0,1) else False
+    is_first_player = True if random.randint(0, 1) else False
     game = oxo.Board()
     if not is_first_player:
         game.make_random_move()
-    
+
     while True:
-        model_move = get_model_move(model, np.array([flat(game.board)]))
+        model_move = get_model_move(model, trad_input(game))
         if game.board[model_move[0]][model_move[1]]:
             return LOOSE_BY_INVALID_MOVE
 
@@ -51,14 +78,14 @@ def model_play_game(model):
 
         if game.is_winning():
             return WIN
-        if (len(game.moves)>=9):
+        if (len(game.moves) >= 9):
             return DRAW
-        
+
         game.make_random_move()
 
         if game.is_winning():
             return LOOSE_ALIGNMENT
-        if (len(game.moves)>=9):
+        if (len(game.moves) >= 9):
             return DRAW
 
 
@@ -84,7 +111,7 @@ def get_fitness_value(model):
 
 def create_model():
     model = Sequential()
-    model.add(Dense(50, input_dim=9, activation='relu'))
+    model.add(Dense(50, input_dim=28, activation='relu'))
     model.add(Dense(50, activation='relu'))
     model.add(Dense(9, activation='softmax'))
     return model
@@ -134,15 +161,16 @@ def mutate_models(models, mutate_rate):
 
 def genetic_algorithm(population, num_gene=100):
     for i in range(num_gene):
-        print(f"-- generation number {i}")
         fitness_values = [get_fitness_value(brain) for brain in population]
+        best_score = max(fitness_values)
+        print(f"ai_oxo: -- generation number {i}\nai_oxo: best score: {best_score}")
         best_brains = get_best_brains(population, fitness_values)
         clones = clone_models(best_brains)
         mutated = mutate_models(clones, MUTATION_RATE)
         best_brains.extend(mutated)
         save_model(get_best_brain(population, fitness_values))
         population = best_brains
-    print("finished executing genetic_algorithm")
+    print("ai_oxo: finished executing genetic_algorithm")
 
 
 if __name__ == "__main__":
