@@ -5,8 +5,54 @@ from tensorflow.keras.models import clone_model
 from tensorflow.keras.layers import Dense
 import random
 
+import oxo_game as oxo
+
 MUTATION_RATE = 0.01
 POPULATION_SIZE = 100
+LOOSE_BY_INVALID_MOVE = 0
+LOOSE_ALIGNMENT = 1
+DRAW = 2
+WIN = 3
+
+
+def flat(array):
+    final_array = []
+    for arr in array:
+        final_array.extend(arr)
+    return final_array
+
+
+def get_model_move(model, input):
+    output = model.predict(input)
+    move_index = output.index(max(output))
+    move = (move_index // 3, move_index % 3)
+    return move
+
+
+def model_play_game(model):
+    is_first_player = True if random.randint(0,1) else False
+    game = oxo.Board()
+    if not is_first_player:
+        game.make_random_move()
+    
+    while True:
+        model_move = get_model_move(model, flat(game.board))
+        if game.board[model_move[0]][model_move[1]]:
+            return LOOSE_BY_INVALID_MOVE
+
+        game.make_move(model_move)
+
+        if game.is_winning():
+            return WIN
+        if (len(game.moves)>=9):
+            return DRAW
+        
+        game.make_random_move()
+
+        if game.is_winning():
+            return LOOSE_ALIGNMENT
+        if (len(game.moves)>=9):
+            return DRAW
 
 
 def save_model(model, filename="model.keras"):
