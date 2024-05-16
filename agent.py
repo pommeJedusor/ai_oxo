@@ -117,7 +117,7 @@ def model_play_game(model):
             return DRAW
 
 
-def save_model(model, filename="model.keras"):
+def save_model(model, filename="model2.keras"):
     model.save(filename)
 
 
@@ -145,7 +145,7 @@ def create_model():
     return model
 
 
-def get_best_brains(population):
+def get_best_brains(population, deepmax=1, deep=0):
     best_brains = []
     while len(population) > 1:
         # remove random model into model_1
@@ -159,7 +159,10 @@ def get_best_brains(population):
         # make them fight against each other and keep the winning
         winner = model_play_model(model_1, model_2)
         best_brains.append(winner)
-    return best_brains
+    if deep >= deepmax:
+        return best_brains
+    else:
+        return get_best_brains(best_brains, deepmax, deep+1)
 
 
 def clone_models(models):
@@ -188,15 +191,22 @@ def mutate_models(models, mutate_rate):
     return models
 
 
-def genetic_algorithm(population, num_gene=100):
+def genetic_algorithm(population, num_gene=300):
     for i in range(num_gene):
         print(f"ai_oxo: -- generation number {i}")
         best_brains = get_best_brains(population)
         clones = clone_models(best_brains)
-        mutated = mutate_models(clones, MUTATION_RATE)
-        best_brains.extend(mutated)
+        mutated_1 = mutate_models(best_brains, MUTATION_RATE)
+        mutated_2 = mutate_models(clones, MUTATION_RATE)
+        clones = clone_models(best_brains)
+        mutated_3 = mutate_models(clones, MUTATION_RATE)
+        clones = clone_models(best_brains)
+        mutated_4 = mutate_models(clones, MUTATION_RATE)
         save_model(random.choice(best_brains))
-        population = best_brains
+        mutated_1.extend(mutated_2)
+        mutated_1.extend(mutated_3)
+        mutated_1.extend(mutated_4)
+        population = mutated_1
     print("ai_oxo: finished executing genetic_algorithm")
 
 

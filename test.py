@@ -63,5 +63,5 @@ def test_ai(model):
 
 if __name__ == "__main__":
     # load model
-    model = load_model('model.keras')
+    model = load_model('model2.keras')
     test_ai(model)
