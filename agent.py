@@ -78,8 +78,9 @@ def get_fitness_value(model):
 
 def create_model():
     model = Sequential()
-    model.add(Dense(10, input_dim=10, activation='sigmoid'))
-    model.add(Dense(10, activation='sigmoid'))
+    model.add(Dense(50, input_dim=9, activation='relu'))
+    model.add(Dense(50, activation='relu'))
+    model.add(Dense(9, activation='softmax'))
     return model
 
 
