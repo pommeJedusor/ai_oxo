@@ -63,6 +63,34 @@ def get_model_move(model, input):
     return trad_output(output)
 
 
+def model_play_model(model_1, model_2):
+    game = oxo.Board()
+    while True:
+        # first model's turn
+        model_1_move = get_model_move(model_1, trad_input(game))
+        if game.board[model_1_move[0]][model_1_move[1]]:
+            return model_2
+
+        game.make_move(model_1_move)
+
+        if game.is_winning():
+            return model_1
+        if (len(game.moves) >= 9):
+            return random.choice([model_1, model_2])
+
+        # second model's turn
+        model_2_move = get_model_move(model_2, trad_input(game))
+        if game.board[model_2_move[0]][model_2_move[1]]:
+            return model_1
+
+        game.make_move(model_2_move)
+
+        if game.is_winning():
+            return model_2
+        if (len(game.moves) >= 9):
+            return random.choice([model_1, model_2])
+
+
 def model_play_game(model):
     is_first_player = True if random.randint(0, 1) else False
     game = oxo.Board()
@@ -117,20 +145,21 @@ def create_model():
     return model
 
 
-def get_best_brains(population, fitness_values):
-    brains = []
-    for i in range(len(population)):
-        brain = {"brain": population[i], "value": fitness_values[i]}
-        brains.append(brain)
-    brains.sort(key=lambda x: x["value"], reverse=True)
-    brains = [brain["brain"] for brain in brains]
-    return brains[0:len(brains)//2]
-
-
-def get_best_brain(population, fitness_values):
-    max_value = max(fitness_values)
-    index = fitness_values.index(max_value)
-    return population[index]
+def get_best_brains(population):
+    best_brains = []
+    while len(population) > 1:
+        # remove random model into model_1
+        model_1_index = random.randint(0, len(population) - 1)
+        model_1 = population[model_1_index]
+        del population[model_1_index]
+        # remove random model into model_2
+        model_2_index = random.randint(0, len(population) - 1)
+        model_2 = population[model_2_index]
+        del population[model_2_index]
+        # make them fight against each other and keep the winning
+        winner = model_play_model(model_1, model_2)
+        best_brains.append(winner)
+    return best_brains
 
 
 def clone_models(models):
@@ -161,14 +190,12 @@ def mutate_models(models, mutate_rate):
 
 def genetic_algorithm(population, num_gene=100):
     for i in range(num_gene):
-        fitness_values = [get_fitness_value(brain) for brain in population]
-        best_score = max(fitness_values)
-        print(f"ai_oxo: -- generation number {i}\nai_oxo: best score: {best_score}")
-        best_brains = get_best_brains(population, fitness_values)
+        print(f"ai_oxo: -- generation number {i}")
+        best_brains = get_best_brains(population)
         clones = clone_models(best_brains)
         mutated = mutate_models(clones, MUTATION_RATE)
         best_brains.extend(mutated)
-        save_model(get_best_brain(population, fitness_values))
+        save_model(random.choice(best_brains))
         population = best_brains
     print("ai_oxo: finished executing genetic_algorithm")
 
