@@ -13,6 +13,7 @@ LOOSE_BY_INVALID_MOVE = 0
 LOOSE_ALIGNMENT = 1
 DRAW = 2
 WIN = 3
+TEST_SIZE = 10
 
 
 def flat(array):
@@ -60,9 +61,19 @@ def save_model(model, filename="model.keras"):
 
 
 def get_fitness_value(model):
-    input = np.array([[random.choice([True, False]) for _ in range(10)]])
-    output = model.predict(input)
-    return np.sum(output)
+    total_score = 0
+    for _ in range(TEST_SIZE):
+        result = model_play_game(model)
+        if result == LOOSE_BY_INVALID_MOVE:
+            total_score -= 3
+        if result == LOOSE_ALIGNMENT:
+            total_score -= 1
+        if result == DRAW:
+            pass
+        if result == WIN:
+            total_score += 1
+
+    return total_score
 
 
 def create_model():
