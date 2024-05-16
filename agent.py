@@ -25,8 +25,14 @@ def flat(array):
 
 def get_model_move(model, input):
     output = model.predict(input)
-    move_index = output.index(max(output))
-    move = (move_index // 3, move_index % 3)
+    max_value = 0
+    best_index = 0
+    for i in range(len(output[0])):
+        value = output[0][i]
+        if value > max_value:
+            max_value = value
+            best_index = i
+    move = (best_index // 3, best_index % 3)
     return move
 
 
@@ -37,7 +43,7 @@ def model_play_game(model):
         game.make_random_move()
     
     while True:
-        model_move = get_model_move(model, flat(game.board))
+        model_move = get_model_move(model, np.array([flat(game.board)]))
         if game.board[model_move[0]][model_move[1]]:
             return LOOSE_BY_INVALID_MOVE
 
